@@ -39,7 +39,7 @@ it gets updated with each event and then calls the scheduler function
 to generate events back to the game
 """
 from dataclasses import dataclass, field
-
+import time
 #
 # A copy of the game's state
 #
@@ -326,6 +326,61 @@ class RunOs:
 
     def schedule(self):
         """Read current status and update the game"""
+
+        """Schedule processes based on starvation level and CPU availability"""
+        # Step 1: Remove finished processes from CPUs
+
+        
+        for pid, process in list(self.processes.items()):
+            if process.cpu:
+                if process.has_ended:
+                    self.move_process(pid)
+                    
+                    break
+                if process.starvation_level == 0:
+                    self.move_process(pid)
+                    
+                    break
+                if process.waiting_for_io:
+                    self.move_process(pid)
+                    
+                    break                 
+
+        # Step 2: Sort processes by starvation level (highest first)
+        sorted_processes = sorted(
+            (p for p in self.processes.values() if not p.has_ended and not p.waiting_for_io and not p.waiting_for_page),
+            key=lambda p: -p.starvation_level  # Sort in descending order
+        )
+
+        # Step 3: Allocate CPUs to processes with the highest starvation levels
+        for process in sorted_processes:
+            if not process.cpu and self.used_cpus < num_cpus:
+                self.move_process(process.pid)
+                
+                process.cpu = True
+                break
+        
+        # Step 4: Handle pages
+        for page in self.pages.values():
+            if (not page.on_disk) and (not page.in_use):
+                self.move_page(page.pid, page.idx)
+                print(f'Page {page.idx} of process {page.pid} moved down')
+                # Ensure the page state is properly updated
+                page.on_disk = True
+                page.in_use = False
+                break
+            elif page.on_disk and page.in_use:
+                self.move_page(page.pid, page.idx)
+                print(f'Page {page.idx} of process {page.pid} moved up')
+                # Ensure the page state is properly updated
+                page.on_disk = False
+                
+                break
+
+            
+        # Handle IO queue
+        if self.io_queue.io_count > 0:
+            self.do_io()
 
 
 #
