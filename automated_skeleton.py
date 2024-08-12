@@ -79,7 +79,7 @@ class Process:
 class IoQueue:
     io_count: int = 0
 
-
+move = 0
 class RunOs:
     """Object oriented skeleton for automation script
 
@@ -328,6 +328,8 @@ class RunOs:
         """Read current status and update the game"""
 
         """Schedule processes based on starvation level and CPU availability"""
+
+        global move
         # Step 1: Remove finished processes from CPUs
 
         
@@ -360,25 +362,34 @@ class RunOs:
                 process.cpu = True
                 break
         
-        # Step 4: Handle pages
-        for page in self.pages.values():
-            if (not page.on_disk) and (not page.in_use):
-                self.move_page(page.pid, page.idx)
-                print(f'Page {page.idx} of process {page.pid} moved down')
-                # Ensure the page state is properly updated
-                page.on_disk = True
-                page.in_use = False
-                break
-            elif page.on_disk and page.in_use:
-                self.move_page(page.pid, page.idx)
-                print(f'Page {page.idx} of process {page.pid} moved up')
-                # Ensure the page state is properly updated
-                page.on_disk = False
+        # # Step 4: Handle pages
+        # for page in self.pages.values():
+
+        #     if self.processes[page.pid].waiting_for_page and not page.on_disk:
+
+        #         self.move_page(page.pid, page.idx)
+        #         move+=1
+        #         print(move)
+        #         # print(f'Page {page.idx} of process {page.pid} moved up\npageondist:{page.on_disk}')
+        #         # Ensure the page state is properly updated
                 
-                break
+                
+
+        # for page in self.pages.values():
+        #     if (not page.on_disk) and (not self.processes[page.pid].cpu) and not page.in_use:
+                
+                
+        #         self.move_page(page.pid, page.idx)
+        #         move+=1
+        #         print(move)
+        #         print(f'Page {page.idx} of process {page.pid} moved down\npageondist:{page.on_disk}')
+                
+        #         # Ensure the page state is properly updated
+        #         page.on_disk = True
+        #         break
 
             
-        # Handle IO queue
+        # Step 5 Handle IO queue
         if self.io_queue.io_count > 0:
             self.do_io()
 
